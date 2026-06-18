@@ -5,42 +5,62 @@ namespace Database\Seeders;
 use App\Models\Client;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
 
 class ClientSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $password = 'Mudar@123';
 
-        // Criar 10 usuários clientes com padrão cli@1.com, cli@2.com...
         for ($i = 1; $i <= 10; $i++) {
             $email = "cli@$i.com";
+            $firstName = "Cliente";
+            $lastName = "Teste $i";
+            $displayName = "{$firstName} {$lastName}";
+            $phone1 = fake()->phoneNumber();
+            $documentNumber = fake()->numerify(
+                fake()->randomElement(['###########', '##############'])
+            );
 
             $user = User::firstOrCreate(
-                ['email' => $email],
+                ['email_hash' => hash('sha256', $email)],
                 [
-                    'name' => "Cliente Teste $i",
-                    'email' => $email,
-                    'password' => $password,
-                    'access_level' => 2, // CLIENT
+                    'username' => "cli{$i}",
+                    'password' => Hash::make($password),
+                    'first_name_hash' => hash('sha256', $firstName),
+                    'first_name_encrypted' => Crypt::encryptString($firstName),
+                    'last_name_hash' => hash('sha256', $lastName),
+                    'last_name_encrypted' => Crypt::encryptString($lastName),
+                    'display_name' => $displayName,
+                    'email_hash' => hash('sha256', $email),
+                    'email_encrypted' => Crypt::encryptString($email),
+                    'access_level' => 2,
                     'is_active' => true,
                 ]
             );
 
-            // Garante que o cliente associado ao usuário também exista
             Client::firstOrCreate(
                 ['user_id' => $user->id],
                 [
-                    'name' => "Cliente Teste $i",
+                    'first_name_hash' => hash('sha256', $firstName),
+                    'first_name_encrypted' => Crypt::encryptString($firstName),
+                    'last_name_hash' => hash('sha256', $lastName),
+                    'last_name_encrypted' => Crypt::encryptString($lastName),
+                    'display_name' => $displayName,
+                    'email_hash' => hash('sha256', $email),
+                    'email_encrypted' => Crypt::encryptString($email),
+                    'name' => $displayName,
+                    'email' => $email,
                     'document_type' => fake()->randomElement(['CPF', 'CNPJ']),
-                    'document_number' => fake()->numerify(
-                        fake()->randomElement(['###########', '##############'])
-                    ),
-                    'contact1'=> fake()->sentence(),
-                    'phone1' => fake()->phoneNumber(), // ou fake()->numerify('119########')
+                    'document_number' => $documentNumber,
+                    'document_hash' => hash('sha256', $documentNumber),
+                    'document_encrypted' => Crypt::encryptString($documentNumber),
+                    'contact1' => fake()->sentence(),
+                    'phone1' => $phone1,
+                    'phone1_hash' => hash('sha256', $phone1),
+                    'phone1_encrypted' => Crypt::encryptString($phone1),
                     'state_registration' => fake()->optional(0.7)->numerify('#########'),
                     'municipal_registration' => fake()->optional(0.5)->numerify('#########'),
                     'contributor_type' => fake()->randomElement([1, 2, 9]),
@@ -49,7 +69,6 @@ class ClientSeeder extends Seeder
             );
         }
 
-        // Criar alguns clientes sem usuário (para testes de prospecção/vendas diretas)
         Client::factory()->count(5)->create([
             'user_id' => null,
             'is_active' => true,

@@ -4,24 +4,15 @@ namespace Database\Factories;
 
 use App\Models\Client;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Crypt;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Client>
  */
 class ClientFactory extends Factory
 {
-    /**
-     * The name of the factory's corresponding model.
-     *
-     * @var string
-     */
     protected $model = Client::class;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         $documentType = fake()->randomElement(['CPF', 'CNPJ']);
@@ -29,14 +20,35 @@ class ClientFactory extends Factory
             ? $this->generateValidCPF()
             : $this->generateValidCNPJ();
 
+        $firstName = fake()->firstName();
+        $lastName = fake()->lastName();
+        $displayName = "{$firstName} {$lastName}";
+        $email = fake()->unique()->companyEmail();
+        $phone1 = fake()->phoneNumber();
+        $phone2 = fake()->optional(0.6)->phoneNumber();
+
         return [
             'user_id' => null,
-            'name' => fake()->company(),
+            'first_name_hash' => hash('sha256', $firstName),
+            'first_name_encrypted' => Crypt::encryptString($firstName),
+            'last_name_hash' => hash('sha256', $lastName),
+            'last_name_encrypted' => Crypt::encryptString($lastName),
+            'display_name' => $displayName,
+            'email_hash' => hash('sha256', $email),
+            'email_encrypted' => Crypt::encryptString($email),
+            'name' => $displayName,
+            'email' => $email,
             'document_type' => $documentType,
             'document_number' => $documentNumber,
-            'phone1' => fake()->phoneNumber(),
+            'document_hash' => hash('sha256', $documentNumber),
+            'document_encrypted' => Crypt::encryptString($documentNumber),
+            'phone1' => $phone1,
+            'phone1_hash' => $phone1 ? hash('sha256', $phone1) : null,
+            'phone1_encrypted' => $phone1 ? Crypt::encryptString($phone1) : null,
             'contact1' => fake()->name(),
-            'phone2' => fake()->optional(0.6)->phoneNumber(),
+            'phone2' => $phone2,
+            'phone2_hash' => $phone2 ? hash('sha256', $phone2) : null,
+            'phone2_encrypted' => $phone2 ? Crypt::encryptString($phone2) : null,
             'contact2' => fake()->optional(0.6)->name(),
             'state_registration' => fake()->optional(0.7)->numerify('#########'),
             'municipal_registration' => fake()->optional(0.5)->numerify('#########'),
@@ -45,9 +57,6 @@ class ClientFactory extends Factory
         ];
     }
 
-    /**
-     * Generate a valid CPF
-     */
     private function generateValidCPF(): string
     {
         $cpf = [];
@@ -67,9 +76,6 @@ class ClientFactory extends Factory
         return implode('', $cpf);
     }
 
-    /**
-     * Generate a valid CNPJ
-     */
     private function generateValidCNPJ(): string
     {
         $cnpj = [];
@@ -77,7 +83,6 @@ class ClientFactory extends Factory
             $cnpj[] = fake()->randomDigit();
         }
 
-        // First digit
         $sum = 0;
         $weight = 5;
         for ($i = 0; $i < 12; $i++) {
@@ -88,7 +93,6 @@ class ClientFactory extends Factory
         $digit1 = $remainder < 2 ? 0 : 11 - $remainder;
         $cnpj[] = $digit1;
 
-        // Second digit
         $sum = 0;
         $weight = 6;
         for ($i = 0; $i < 13; $i++) {
@@ -102,37 +106,38 @@ class ClientFactory extends Factory
         return implode('', $cnpj);
     }
 
-    /**
-     * Indica que o cliente é Pessoa Física (CPF)
-     */
     public function individual(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'document_type' => 'CPF',
-            'document_number' => $this->generateValidCPF(),
-            'state_registration' => null, // PF geralmente não tem IE
-            'municipal_registration' => null,
-            'contributor_type' => fake()->randomElement([2, 9]), // Isento ou Não Contribuinte
-        ]);
+        return $this->state(function (array $attributes) {
+            $doc = $this->generateValidCPF();
+            return [
+                'document_type' => 'CPF',
+                'document_number' => $doc,
+                'document_hash' => hash('sha256', $doc),
+                'document_encrypted' => Crypt::encryptString($doc),
+                'state_registration' => null,
+                'municipal_registration' => null,
+                'contributor_type' => fake()->randomElement([2, 9]),
+            ];
+        });
     }
 
-    /**
-     * Indica que o cliente é Pessoa Jurídica (CNPJ)
-     */
     public function company(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'document_type' => 'CNPJ',
-            'document_number' => $this->generateValidCNPJ(),
-            'state_registration' => fake()->numerify('#########'),
-            'municipal_registration' => fake()->numerify('#########'),
-            'contributor_type' => fake()->randomElement([1, 2]), // Contribuinte ou Isento
-        ]);
+        return $this->state(function (array $attributes) {
+            $doc = $this->generateValidCNPJ();
+            return [
+                'document_type' => 'CNPJ',
+                'document_number' => $doc,
+                'document_hash' => hash('sha256', $doc),
+                'document_encrypted' => Crypt::encryptString($doc),
+                'state_registration' => fake()->numerify('#########'),
+                'municipal_registration' => fake()->numerify('#########'),
+                'contributor_type' => fake()->randomElement([1, 2]),
+            ];
+        });
     }
 
-    /**
-     * Indica que o cliente é contribuinte de ICMS
-     */
     public function icmsContributor(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -141,9 +146,6 @@ class ClientFactory extends Factory
         ]);
     }
 
-    /**
-     * Indica que o cliente é isento de ICMS
-     */
     public function icmsExempt(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -152,9 +154,6 @@ class ClientFactory extends Factory
         ]);
     }
 
-    /**
-     * Indica que o cliente não é contribuinte
-     */
     public function nonContributor(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -163,9 +162,6 @@ class ClientFactory extends Factory
         ]);
     }
 
-    /**
-     * Indica que o cliente está inativo
-     */
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [

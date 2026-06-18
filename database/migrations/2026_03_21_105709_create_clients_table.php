@@ -6,50 +6,54 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('clients', function (Blueprint $table) {
             $table->id();
-            
-            // Relacionamento com o login (User)
+
+            // Nomes (first_name e last_name criptografados)
+            $table->string('first_name_hash', 64)->nullable();
+            $table->text('first_name_encrypted')->nullable();
+            $table->string('last_name_hash', 64)->nullable();
+            $table->text('last_name_encrypted')->nullable();
+            $table->string('display_name')->nullable();
+
+            // Email (hash para busca, encrypted para exibição/disparo)
+            $table->string('email_hash', 64)->nullable()->unique();
+            $table->text('email_encrypted')->nullable();
+
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
-            
-            $table->string('name');
+
+            // Campos legados de transição (name, email em texto puro)
+            $table->string('name')->nullable();
+            $table->string('email')->nullable();
+
             $table->enum('document_type', ['CPF', 'CNPJ']);
-            $table->string('document_number')->unique(); // CPF ou CNPJ
-            
-            // Email será usado da tabela users (FK) - não duplicar aqui
-            
-            // Campos fiscais (podem ser nulos para PF)
-            $table->string('state_registration')->nullable(); // Inscrição Estadual
-            $table->string('municipal_registration')->nullable(); // Inscrição Municipal
-            
-            // Tipo de contribuinte (1=Contribuinte ICMS, 2=Isento, 9=Não Contribuinte)
+            $table->string('document_number');
+            $table->string('document_hash', 64)->nullable()->unique();
+            $table->text('document_encrypted')->nullable();
+
+            $table->string('state_registration')->nullable();
+            $table->string('municipal_registration')->nullable();
             $table->tinyInteger('contributor_type')->nullable();
-            
-            // Contatos Principais e Secundários
+
             $table->string('phone1', 20);
-            $table->string('contact1'); // Nome da pessoa de contato 1
+            $table->string('phone1_hash', 64)->nullable();
+            $table->text('phone1_encrypted')->nullable();
+            $table->string('contact1');
 
             $table->string('phone2', 20)->nullable();
-            $table->string('contact2')->nullable(); // Nome da pessoa de contato 2 
+            $table->string('phone2_hash', 64)->nullable();
+            $table->text('phone2_encrypted')->nullable();
+            $table->string('contact2')->nullable();
 
-            // Status do cliente
             $table->boolean('is_active')->default(true);
-            
-            // Email verification
             $table->timestamp('email_verified_at')->nullable();
 
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('clients');

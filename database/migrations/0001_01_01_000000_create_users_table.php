@@ -8,23 +8,33 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Tabela Principal de Usuários
-        
         Schema::create('users', function (Blueprint $table) {
-            $table->id(); 
-            $table->string('name');
-            $table->string('email')->unique();
+            $table->id();
+
+            // Login
+            $table->string('username')->unique();
             $table->string('password');
-            $table->integer('access_level')->default(0); 
-            $table->boolean('is_active')->default(true); 
-            // Campo para registrar o último IP de login (suporta IPv4 e IPv6)
+
+            // Nomes (first_name e last_name criptografados, display_name em texto puro)
+            $table->string('first_name_hash', 64)->nullable();
+            $table->text('first_name_encrypted')->nullable();
+            $table->string('last_name_hash', 64)->nullable();
+            $table->text('last_name_encrypted')->nullable();
+            $table->string('display_name');
+
+            // Email (hash para busca, encrypted para exibição/disparo)
+            $table->string('email_hash', 64)->unique();
+            $table->text('email_encrypted');
+
+            // Controle de acesso
+            $table->integer('access_level')->default(0);
+            $table->boolean('is_active')->default(true);
             $table->string('last_login_ip', 45)->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
 
-        // Tabela de Sessões (Importante para performance/segurança)
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->foreignId('user_id')->nullable()->index();

@@ -6,33 +6,37 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('addresses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->constrained()->onDelete('cascade');
-            
+
             $table->string('zip_code', 10);
+            $table->string('zip_code_hash', 64)->nullable();
+            $table->text('zip_code_encrypted')->nullable();
+
             $table->string('street');
+            $table->string('street_hash', 64)->nullable();
+            $table->text('street_encrypted')->nullable();
+
             $table->string('number', 10);
             $table->string('neighborhood');
+            $table->string('neighborhood_hash', 64)->nullable();
+            $table->text('neighborhood_encrypted')->nullable();
+
             $table->string('city');
+            $table->string('city_hash', 64)->nullable();
+            $table->text('city_encrypted')->nullable();
+
             $table->char('state', 2);
             $table->string('complement')->nullable();
-            
-            // Identifica se este é o endereço principal de entrega
             $table->boolean('is_delivery_address')->default(false);
-            
+
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('addresses');

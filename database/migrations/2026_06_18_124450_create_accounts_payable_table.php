@@ -11,7 +11,6 @@ return new class extends Migration
         Schema::create('accounts_payable', function (Blueprint $table) {
             $table->id();
             $table->foreignId('supplier_id')->constrained()->onDelete('cascade');
-            $table->foreignId('purchase_id')->nullable()->constrained('stock_movements')->nullOnDelete();
             $table->decimal('total_amount', 12, 2);
             $table->decimal('paid_amount', 12, 2)->default(0);
             $table->decimal('remaining_amount', 12, 2);

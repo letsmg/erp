@@ -4,25 +4,32 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Para os usuários normais aleatórios, podemos manter a factory,
-        // mas é recomendável só rodar se a tabela estiver vazia para evitar lentidão
         if (User::count() < 5) {
             User::factory()->count(5)->create();
         }
 
-        // 2. O ADMIN (O ponto onde deu o erro)
-        // Usamos updateOrCreate para evitar o erro de "Duplicate Entry"
+        $firstName = 'Admin';
+        $lastName = 'Sistema';
+        $email = 'admin@teste.com';
+
         User::updateOrCreate(
-            ['email' => 'admin@teste.com'], // Busca por este campo
+            ['username' => 'admin'],
             [
-                'name' => 'Admin',
                 'password' => Hash::make('Mudar@123'),
+                'first_name_hash' => hash('sha256', $firstName),
+                'first_name_encrypted' => Crypt::encryptString($firstName),
+                'last_name_hash' => hash('sha256', $lastName),
+                'last_name_encrypted' => Crypt::encryptString($lastName),
+                'display_name' => "{$firstName} {$lastName}",
+                'email_hash' => hash('sha256', $email),
+                'email_encrypted' => Crypt::encryptString($email),
                 'access_level' => 1,
                 'is_active' => true,
                 'email_verified_at' => now(),

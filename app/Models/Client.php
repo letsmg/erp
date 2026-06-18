@@ -14,14 +14,19 @@ class Client extends Model
 
     protected $fillable = [
         'user_id',
-        'first_name',
-        'last_name',
+        'first_name_hash',
+        'first_name_encrypted',
+        'last_name_hash',
+        'last_name_encrypted',
         'display_name',
+        'email_hash',
+        'email_encrypted',
         'name',
+        'email',
+        'document_type',
         'document_number',
         'document_hash',
         'document_encrypted',
-        'document_type',
         'phone1',
         'phone1_hash',
         'phone1_encrypted',
@@ -34,6 +39,21 @@ class Client extends Model
         'municipal_registration',
         'contributor_type',
         'is_active',
+    ];
+
+    protected $hidden = [
+        'first_name_hash',
+        'first_name_encrypted',
+        'last_name_hash',
+        'last_name_encrypted',
+        'email_hash',
+        'email_encrypted',
+        'document_hash',
+        'document_encrypted',
+        'phone1_hash',
+        'phone1_encrypted',
+        'phone2_hash',
+        'phone2_encrypted',
     ];
 
     // ─── Relationships ───
@@ -58,16 +78,32 @@ class Client extends Model
         return $this->hasMany(ShoppingCart::class, 'user_id', 'user_id');
     }
 
-    // ─── Accessors ───
+    // ─── Accessors (Descriptografar dados para exibição) ───
 
-    public function getDeliveryAddressAttribute()
+    public function getDecryptedFirstNameAttribute(): ?string
     {
-        return $this->addresses()->where('is_delivery_address', true)->first();
+        if ($this->first_name_encrypted) {
+            return Crypt::decryptString($this->first_name_encrypted);
+        }
+        return null;
     }
 
-    /**
-     * Get decrypted document number
-     */
+    public function getDecryptedLastNameAttribute(): ?string
+    {
+        if ($this->last_name_encrypted) {
+            return Crypt::decryptString($this->last_name_encrypted);
+        }
+        return null;
+    }
+
+    public function getDecryptedEmailAttribute(): ?string
+    {
+        if ($this->email_encrypted) {
+            return Crypt::decryptString($this->email_encrypted);
+        }
+        return null;
+    }
+
     public function getDecryptedDocumentAttribute(): ?string
     {
         if ($this->document_encrypted) {
@@ -76,9 +112,6 @@ class Client extends Model
         return $this->document_number;
     }
 
-    /**
-     * Get decrypted phone1
-     */
     public function getDecryptedPhone1Attribute(): ?string
     {
         if ($this->phone1_encrypted) {
@@ -87,15 +120,17 @@ class Client extends Model
         return $this->phone1;
     }
 
-    /**
-     * Get decrypted phone2
-     */
     public function getDecryptedPhone2Attribute(): ?string
     {
         if ($this->phone2_encrypted) {
             return Crypt::decryptString($this->phone2_encrypted);
         }
         return $this->phone2;
+    }
+
+    public function getDeliveryAddressAttribute()
+    {
+        return $this->addresses()->where('is_delivery_address', true)->first();
     }
 
     // ─── Helpers ───

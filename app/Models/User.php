@@ -7,26 +7,37 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Enums\AccessLevel;
+use Illuminate\Support\Facades\Crypt;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'first_name',
-        'last_name',
-        'display_name',
-        'email',
+        'username',
         'password',
+        'first_name_hash',
+        'first_name_encrypted',
+        'last_name_hash',
+        'last_name_encrypted',
+        'display_name',
+        'email_hash',
+        'email_encrypted',
         'access_level',
         'is_active',
         'last_login_ip',
-        'email_verified_at'
+        'email_verified_at',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'first_name_hash',
+        'first_name_encrypted',
+        'last_name_hash',
+        'last_name_encrypted',
+        'email_hash',
+        'email_encrypted',
     ];
 
     protected $casts = [
@@ -35,6 +46,43 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_active' => 'boolean',
         'access_level' => AccessLevel::class,
     ];
+
+    // ─── Accessors (Descriptografar dados para exibição) ───
+
+    public function getDecryptedFirstNameAttribute(): ?string
+    {
+        if ($this->first_name_encrypted) {
+            return Crypt::decryptString($this->first_name_encrypted);
+        }
+        return null;
+    }
+
+    public function getDecryptedLastNameAttribute(): ?string
+    {
+        if ($this->last_name_encrypted) {
+            return Crypt::decryptString($this->last_name_encrypted);
+        }
+        return null;
+    }
+
+    public function getDecryptedEmailAttribute(): ?string
+    {
+        if ($this->email_encrypted) {
+            return Crypt::decryptString($this->email_encrypted);
+        }
+        return null;
+    }
+
+    public function getEmailForVerification(): string
+    {
+        return $this->decrypted_email ?? '';
+    }
+
+    // ─── Route key name ───
+    public function getRouteKeyName(): string
+    {
+        return 'username';
+    }
 
     // ─── Helpers ───
 
