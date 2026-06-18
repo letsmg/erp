@@ -1,7 +1,0 @@
-Responda sempre em português (PT-BR).
-Ambiente: Windows 11 (use PowerShell para comandos de terminal).
-Arquitetura: MVC Modular com separação estrita: Services, Repositories, Policies, Middlewares e Form Requests.
-Regras de Workflow:
-- Nunca crie arquivos apenas para aprovar testes (use logs se necessário).
-- Evite criar Controllers para tabelas auxiliares de campo único (como categorias); gerencie no módulo principal.
-- Sempre valide se um arquivo já existe antes de tentar criá-lo.
