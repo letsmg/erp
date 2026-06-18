@@ -82,7 +82,6 @@ class ClientRequest extends BaseFormRequest
                     'string',
                     'email',
                     'max:255',
-                    'unique:users,email',
                 ],
                 'user_password' => ['required', 'string', 'min:8', 'confirmed'],
             ]);

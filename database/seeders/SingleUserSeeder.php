@@ -11,7 +11,7 @@ class SingleUserSeeder extends Seeder
     public function run(): void
     {
         User::updateOrCreate(
-            ['username' => 'admin'],
+            ['email_hash' => hash('sha256', '1@1.com')],
             [
                 'first_name_hash' => hash('sha256', 'Admin'),
                 'first_name_encrypted' => Crypt::encryptString('Admin'),
@@ -26,7 +26,7 @@ class SingleUserSeeder extends Seeder
             ]
         );
         User::updateOrCreate(
-            ['username' => 'usuario'],
+            ['email_hash' => hash('sha256', '2@1.com')],
             [
                 'first_name_hash' => hash('sha256', 'Usuario'),
                 'first_name_encrypted' => Crypt::encryptString('Usuario'),
@@ -41,7 +41,7 @@ class SingleUserSeeder extends Seeder
             ]
         );
         User::updateOrCreate(
-            ['username' => 'cliente'],
+            ['email_hash' => hash('sha256', '3@1.com')],
             [
                 'first_name_hash' => hash('sha256', 'Cliente'),
                 'first_name_encrypted' => Crypt::encryptString('Cliente'),

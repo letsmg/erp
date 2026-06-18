@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Client;
-use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
@@ -12,8 +11,6 @@ class ClientSeeder extends Seeder
 {
     public function run(): void
     {
-        $password = 'Mudar@123';
-
         for ($i = 1; $i <= 10; $i++) {
             $email = "cli@$i.com";
             $firstName = "Cliente";
@@ -24,26 +21,10 @@ class ClientSeeder extends Seeder
                 fake()->randomElement(['###########', '##############'])
             );
 
-            $user = User::firstOrCreate(
+            Client::firstOrCreate(
                 ['email_hash' => hash('sha256', $email)],
                 [
-                    'username' => "cli{$i}",
-                    'password' => Hash::make($password),
-                    'first_name_hash' => hash('sha256', $firstName),
-                    'first_name_encrypted' => Crypt::encryptString($firstName),
-                    'last_name_hash' => hash('sha256', $lastName),
-                    'last_name_encrypted' => Crypt::encryptString($lastName),
-                    'display_name' => $displayName,
-                    'email_hash' => hash('sha256', $email),
-                    'email_encrypted' => Crypt::encryptString($email),
-                    'access_level' => 2,
-                    'is_active' => true,
-                ]
-            );
-
-            Client::firstOrCreate(
-                ['user_id' => $user->id],
-                [
+                    'password' => Hash::make('Mudar@123'),
                     'first_name_hash' => hash('sha256', $firstName),
                     'first_name_encrypted' => Crypt::encryptString($firstName),
                     'last_name_hash' => hash('sha256', $lastName),

@@ -22,7 +22,7 @@ class RegisterRequest extends BaseFormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email',
             'password' => 'required|string|min:8|confirmed',
         ];
     }

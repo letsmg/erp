@@ -11,8 +11,7 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
 
-            // Login
-            $table->string('username')->unique();
+            // Login via email_hash
             $table->string('password');
 
             // Nomes (first_name e last_name criptografados, display_name em texto puro)
@@ -22,7 +21,7 @@ return new class extends Migration
             $table->text('last_name_encrypted')->nullable();
             $table->string('display_name');
 
-            // Email (hash para busca, encrypted para exibição/disparo)
+            // Email (hash para busca/login, encrypted para exibição/disparo)
             $table->string('email_hash', 64)->unique();
             $table->text('email_encrypted');
 

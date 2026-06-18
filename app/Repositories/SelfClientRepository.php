@@ -6,51 +6,33 @@ use App\Models\Client;
 
 class SelfClientRepository
 {
-    /**
-     * Encontra cliente pelo ID do usuário.
-     */
     public function findByUserId(int $userId): ?Client
     {
         return Client::where('user_id', $userId)->first();
     }
 
-    /**
-     * Cria um novo cliente.
-     */
     public function create(array $data): Client
     {
         return Client::create($data);
     }
 
-    /**
-     * Atualiza dados do cliente.
-     */
     public function update(Client $client, array $data): Client
     {
         $client->update($data);
         return $client->fresh();
     }
 
-    /**
-     * Exclui o cliente.
-     */
     public function delete(Client $client): bool
     {
         return $client->delete();
     }
 
-    /**
-     * Inativa o cliente.
-     */
     public function deactivate(Client $client): Client
     {
         $client->update(['is_active' => false]);
         return $client->fresh();
     }
 
-    /**
-     * Verifica se cliente existe pelo documento.
-     */
     public function findByDocument(string $document): ?Client
     {
         $cleanDocument = preg_replace('/[^0-9]/', '', $document);
@@ -58,13 +40,12 @@ class SelfClientRepository
     }
 
     /**
-     * Verifica se email já está em uso.
+     * Verifica se email já está em uso (busca por email_hash)
      */
     public function emailExists(string $email, ?int $excludeClientId = null): bool
     {
-        $query = Client::whereHas('user', function ($q) use ($email) {
-            $q->where('email', $email);
-        });
+        $emailHash = hash('sha256', $email);
+        $query = Client::where('email_hash', $emailHash);
 
         if ($excludeClientId) {
             $query->where('id', '!=', $excludeClientId);
@@ -73,9 +54,6 @@ class SelfClientRepository
         return $query->exists();
     }
 
-    /**
-     * Obtém endereços do cliente.
-     */
     public function getAddresses(int $clientId)
     {
         return Client::find($clientId)->addresses()
@@ -84,18 +62,12 @@ class SelfClientRepository
             ->get();
     }
 
-    /**
-     * Adiciona endereço ao cliente.
-     */
     public function addAddress(int $clientId, array $addressData)
     {
         $client = Client::find($clientId);
         return $client->addresses()->create($addressData);
     }
 
-    /**
-     * Atualiza endereço do cliente.
-     */
     public function updateAddress(int $addressId, array $addressData)
     {
         $address = \App\Models\Address::findOrFail($addressId);
@@ -103,25 +75,15 @@ class SelfClientRepository
         return $address->fresh();
     }
 
-    /**
-     * Remove endereço do cliente.
-     */
     public function removeAddress(int $addressId): bool
     {
         return \App\Models\Address::findOrFail($addressId)->delete();
     }
 
-    /**
-     * Define endereço principal de entrega.
-     */
     public function setDeliveryAddress(int $clientId, int $addressId)
     {
         $client = Client::find($clientId);
-        
-        // Remove marca de todos os endereços
         $client->addresses()->update(['is_delivery_address' => false]);
-        
-        // Define o novo endereço principal
         $client->addresses()->where('id', $addressId)->update(['is_delivery_address' => true]);
     }
 }

@@ -2,17 +2,19 @@
 
 namespace App\Models;
 
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Crypt;
 
-class Client extends Model
+class Client extends Authenticatable
 {
-    use HasFactory;
+    use HasFactory, Notifiable;
 
     protected $fillable = [
+        'password',
         'user_id',
         'first_name_hash',
         'first_name_encrypted',
@@ -42,6 +44,8 @@ class Client extends Model
     ];
 
     protected $hidden = [
+        'password',
+        'remember_token',
         'first_name_hash',
         'first_name_encrypted',
         'last_name_hash',
@@ -56,7 +60,11 @@ class Client extends Model
         'phone2_encrypted',
     ];
 
-    // ─── Relationships ───
+    protected $casts = [
+        'password' => 'hashed',
+        'is_active' => 'boolean',
+        'email_verified_at' => 'datetime',
+    ];
 
     public function user(): BelongsTo
     {
@@ -77,8 +85,6 @@ class Client extends Model
     {
         return $this->hasMany(ShoppingCart::class, 'user_id', 'user_id');
     }
-
-    // ─── Accessors (Descriptografar dados para exibição) ───
 
     public function getDecryptedFirstNameAttribute(): ?string
     {
@@ -132,8 +138,6 @@ class Client extends Model
     {
         return $this->addresses()->where('is_delivery_address', true)->first();
     }
-
-    // ─── Helpers ───
 
     public function isCPF(): bool
     {

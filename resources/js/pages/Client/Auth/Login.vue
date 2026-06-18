@@ -14,7 +14,7 @@ const props = defineProps<{
 const showPassword = ref(false)
 
 const form = useForm({
-  email: 'cli@1.com',
+  username: 'cli1',
   password: 'Mudar@123',
   remember: false,
 })
@@ -47,22 +47,22 @@ const submit = () => {
 
         <form @submit.prevent="submit" class="space-y-6">
           <div>
-            <label for="email" class="block text-xs font-black text-slate-700 uppercase tracking-widest mb-2">
-              E-mail
+            <label for="username" class="block text-xs font-black text-slate-700 uppercase tracking-widest mb-2">
+              Nome de Usuário
             </label>
             <div class="mt-1">
               <input
-                id="email"
-                v-model="form.email"
-                type="email"
+                id="username"
+                v-model="form.username"
+                type="text"
                 class="block w-full bg-slate-50 border-slate-200 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-primary transition-all outline-none shadow-sm"
                 required
-                autocomplete="email"
-                placeholder="seu@email.com"
+                autocomplete="username"
+                placeholder="seu-usuario"
               />
             </div>
-            <p v-if="form.errors.email" class="mt-2 text-xs font-bold text-red-600 uppercase">
-              {{ form.errors.email }}
+            <p v-if="form.errors.username" class="mt-2 text-xs font-bold text-red-600 uppercase">
+              {{ form.errors.username }}
             </p>
           </div>
 

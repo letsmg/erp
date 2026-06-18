@@ -1,5 +1,5 @@
 <script setup>
-import { useForm, Head, Link } from '@inertiajs/vue3'; // Importado o Link aqui
+import { useForm, Head, Link } from '@inertiajs/vue3';
 
 defineProps({ status: String });
 
@@ -31,6 +31,7 @@ const submit = () => {
                         class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                         required
                         autofocus
+                        autocomplete="username"
                     >
                     <div v-if="form.errors.email" class="text-red-600 text-sm mt-2">
                         {{ form.errors.email }}

@@ -5,6 +5,8 @@ namespace Database\Factories;
 use App\Models\Client;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Client>
@@ -28,6 +30,7 @@ class ClientFactory extends Factory
         $phone2 = fake()->optional(0.6)->phoneNumber();
 
         return [
+            'password' => Hash::make('Mudar@123'),
             'user_id' => null,
             'first_name_hash' => hash('sha256', $firstName),
             'first_name_encrypted' => Crypt::encryptString($firstName),

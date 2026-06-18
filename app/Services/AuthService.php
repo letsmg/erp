@@ -10,13 +10,9 @@ use App\Mail\RecuperarSenhaMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
-use App\Enums\AccessLevel;
 
 class AuthService
 {
-    /**
-     * Valida a localização do IP.
-     */
     private function validateGeographicAccess(): void
     {
         $ip = request()->ip();
@@ -35,13 +31,11 @@ class AuthService
                     logger()->warning("Tentativa de login bloqueada: IP estrangeiro detectado", [
                         'ip' => $ip,
                         'pais' => $countryCode,
-                        'email' => request('email')
+                        'email' => request('email'),
                     ]);
 
                     throw ValidationException::withMessages([
-                        'email' => [
-                            'Acesso negado: Este sistema não aceita logins fora do Brasil.'
-                        ],
+                        'email' => ['Acesso negado: Este sistema não aceita logins fora do Brasil.'],
                     ]);
                 }
             }
@@ -51,51 +45,42 @@ class AuthService
     }
 
     /**
-     * 🔥 LOGIN CORRIGIDO COM ENUM E PERFIS DISTINTOS
+     * Login via email_hash (converte email para hash e busca)
      */
     public function login(array $credentials, $remember = false, bool $isClientAuth = false)
     {
         $this->validateGeographicAccess();
 
-        // 🔎 1. Busca usuário
-        $user = User::where('email', $credentials['email'])->first();
+        $emailHash = hash('sha256', $credentials['email']);
+        $user = User::where('email_hash', $emailHash)->first();
 
         if (!$user) {
             return false;
         }
 
-        // 🔐 2. Valida senha
         if (!Hash::check($credentials['password'], $user->password)) {
             return false;
         }
 
-        // 🚫 3. Verifica se o usuário está ativo (PADRÃO PARA TODOS)
         if (!$user->is_active) {
             throw ValidationException::withMessages([
-                'email' => ['Sua conta está bloqueada. Entre em contato com a administração para reativá-la.'],
+                'email' => ['Sua conta está bloqueada. Entre em contato com a administração.'],
             ]);
         }
 
-        // 🔥 4. VALIDAÇÃO DE PERFIL POR PORTAL
         if ($isClientAuth) {
-            // Se for login de cliente, o usuário DEVE ser um CLIENT
             if (!$user->isClient()) {
                 return false;
             }
         } else {
-            // Se for login administrativo, o usuário NÃO PODE ser um CLIENT
             if ($user->isClient()) {
                 return false;
             }
         }
 
-        // ✅ 5. Login manual
         Auth::login($user, $remember);
 
-        // 🧾 6. Auditoria
-        $user->update([
-            'last_login_ip' => request()->ip()
-        ]);
+        $user->update(['last_login_ip' => request()->ip()]);
 
         return true;
     }
@@ -113,9 +98,27 @@ class AuthService
         $request->session()->regenerateToken();
     }
 
-    public function sendResetLink(string $email)
+    /**
+     * Envia link de reset para o email (converte para hash e busca)
+     */
+    public function sendResetLink(string $email): bool
     {
+        $emailHash = hash('sha256', $email);
+        $user = User::where('email_hash', $emailHash)->first();
+
+        if (!$user) {
+            return false;
+        }
+
+        $decryptedEmail = $user->decrypted_email;
+
+        if (!$decryptedEmail) {
+            return false;
+        }
+
         $url = route('login');
-        Mail::to($email)->send(new RecuperarSenhaMail($url));
+        Mail::to($decryptedEmail)->send(new RecuperarSenhaMail($url));
+
+        return true;
     }
 }

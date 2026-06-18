@@ -52,11 +52,12 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLogin'])->name('login');    
     Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 
-    Route::get('/forgot-password', [LoginController::class, 'showForgotPassword'])
-        ->name('password.request');
+Route::get('/forgot-password', [LoginController::class, 'showForgotPassword'])
+    ->name('password.request');
 
-    Route::post('/forgot-password', [LoginController::class, 'sendResetLinkEmail'])
-        ->name('password.email');
+Route::post('/forgot-password', [LoginController::class, 'sendResetLinkEmail'])
+    ->name('password.email');
+
 });
 
 /*

@@ -2,17 +2,17 @@
 import { Head } from '@inertiajs/vue3';
 import { useForm, Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import { Eye, EyeOff, LogIn, ShieldCheck, Globe, Monitor, ArrowLeft } from 'lucide-vue-next';
+import { Eye, EyeOff, LogIn, ShieldCheck, Globe, Monitor, ArrowLeft, Mail } from 'lucide-vue-next';
 import GuestLayout from '../../Layouts/GuestLayout.vue';
 
-// Recebe o IP enviado pelo Controller
 const props = defineProps({ 
     errors: Object,
-    userIp: String 
+    userIp: String,
+    status: String,
 });
 
 const form = useForm({
-    email: '1@1.com',
+    email: 'admin@teste.com',
     password: 'Mudar@123',
     remember: false,
 });
@@ -41,19 +41,26 @@ const submit = () => {
                 <p class="text-sm text-gray-500 mt-2">Identificação de acesso protegida</p>
             </div>
 
+            <div v-if="status" class="mb-4 text-sm font-medium text-green-600 text-center">
+                {{ status }}
+            </div>
+
             <form @submit.prevent="submit" class="space-y-5">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 italic">E-mail</label>
-                    <input v-model="form.email" type="email" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition"
-                        :class="{ 'border-red-500 ring-1 ring-red-500': errors.email }">
+                    <div class="relative mt-1">
+                        <Mail class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input v-model="form.email" type="email" required autocomplete="email"
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition"
+                            :class="{ 'border-red-500 ring-1 ring-red-500': errors.email }">
+                    </div>
                     <div v-if="errors.email" class="text-red-500 text-xs mt-1 font-medium">{{ errors.email }}</div>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 italic">Senha / Password</label>
                     <div class="relative mt-1">
-                        <input :type="showPassword ? 'text' : 'password'" v-model="form.password" required
+                        <input :type="showPassword ? 'text' : 'password'" v-model="form.password" required autocomplete="current-password"
                             class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition"
                             :class="{ 'border-red-500 ring-1 ring-red-500': errors.password }">
                         <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition">
@@ -68,7 +75,9 @@ const submit = () => {
                         <input id="remember" v-model="form.remember" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded cursor-pointer focus:ring-blue-500">
                         <label for="remember" class="ml-2 block text-sm text-gray-700 cursor-pointer">Lembrar / Remember</label>
                     </div>
-                    <Link :href="route('password.request')" class="text-sm font-medium text-blue-600 hover:text-blue-500 transition">Esqueceu? / Forgot?</Link>
+                    <div>
+                        <Link :href="route('password.request')" class="text-xs font-medium text-blue-600 hover:text-blue-500 transition">Esqueceu a senha? / Forgot password?</Link>
+                    </div>
                 </div>
 
                 <button type="submit" :disabled="form.processing" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition transform active:scale-95">
@@ -108,4 +117,3 @@ const submit = () => {
             </div>
         </div>
     </GuestLayout>
-</template>

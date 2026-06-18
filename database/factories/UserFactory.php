@@ -25,7 +25,6 @@ class UserFactory extends Factory
         $email = fake()->unique()->safeEmail();
 
         return [
-            'username' => Str::lower(fake()->unique()->userName()),
             'password' => static::$password ??= Hash::make('Mudar@123'),
             'first_name_hash' => hash('sha256', $firstName),
             'first_name_encrypted' => Crypt::encryptString($firstName),

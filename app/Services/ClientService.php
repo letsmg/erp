@@ -12,18 +12,13 @@ class ClientService
 {
     public function __construct(private readonly ClientRepository $repository) {}
 
-    /**
-     * Cria novo cliente e usuário associado
-     */
     public function createClientWithUser(array $clientData, array $userData): array
     {
         return DB::transaction(function () use ($clientData, $userData) {
-            // Cria o usuário cliente
-            $userData['access_level'] = 2; // CLIENT
+            $userData['access_level'] = 2;
             $userData['is_active'] = true;
             $user = User::create($userData);
 
-            // Associa o user_id ao cliente
             $clientData['user_id'] = $user->id;
             $client = $this->repository->create($clientData);
 
@@ -34,24 +29,16 @@ class ClientService
         });
     }
 
-    /**
-     * Cria cliente sem usuário (para importação/manual)
-     */
     public function createClientOnly(array $data): Client
     {
         return $this->repository->create($data);
     }
 
-    /**
-     * Atualiza cliente e usuário associado
-     */
     public function updateClientWithUser(Client $client, array $clientData, ?array $userData = null): Client
     {
         return DB::transaction(function () use ($client, $clientData, $userData) {
-            // Atualiza cliente
             $this->repository->update($client, $clientData);
 
-            // Atualiza usuário se fornecido
             if ($userData && $client->user) {
                 $client->user->update($userData);
             }
@@ -60,23 +47,15 @@ class ClientService
         });
     }
 
-    /**
-     * Busca cliente por ID de usuário
-     */
     public function findByUserId(int $userId): ?Client
     {
         return $this->repository->findByUserId($userId);
     }
 
-    /**
-     * Valida documento único
-     */
     public function validateDocument(string $document, ?int $excludeId = null): array
     {
-        // Remove caracteres não numéricos
         $cleanDocument = preg_replace('/[^0-9]/', '', $document);
 
-        // Valida CPF
         if (strlen($cleanDocument) === 11) {
             if (!$this->isValidCPF($cleanDocument)) {
                 return [
@@ -87,7 +66,6 @@ class ClientService
             }
         }
 
-        // Valida CNPJ
         if (strlen($cleanDocument) === 14) {
             if (!$this->isValidCNPJ($cleanDocument)) {
                 return [
@@ -98,7 +76,6 @@ class ClientService
             }
         }
 
-        // Verifica duplicidade
         if ($this->repository->documentExists($cleanDocument, $excludeId)) {
             return [
                 'valid' => false,
@@ -115,17 +92,12 @@ class ClientService
         ];
     }
 
-    /**
-     * Valida CPF
-     */
     private function isValidCPF(string $cpf): bool
     {
-        // Verifica se todos os dígitos são iguais
         if (preg_match('/(\d)\1{10}/', $cpf)) {
             return false;
         }
 
-        // Calcula dígitos verificadores
         for ($t = 9; $t < 11; $t++) {
             for ($d = 0, $c = 0; $c < $t; $c++) {
                 $d += $cpf[$c] * (($t + 1) - $c);
@@ -139,17 +111,12 @@ class ClientService
         return true;
     }
 
-    /**
-     * Valida CNPJ
-     */
     public function isValidCNPJ(string $cnpj): bool
     {
-        // Verifica se todos os dígitos são iguais
         if (preg_match('/(\d)\1{13}/', $cnpj)) {
             return false;
         }
 
-        // Primeiro dígito verificador
         $sum = 0;
         $weight = 5;
         for ($i = 0; $i < 12; $i++) {
@@ -159,7 +126,6 @@ class ClientService
         $rest = $sum % 11;
         $digit1 = $rest < 2 ? 0 : 11 - $rest;
 
-        // Segundo dígito verificador
         $sum = 0;
         $weight = 6;
         for ($i = 0; $i < 13; $i++) {
@@ -172,17 +138,11 @@ class ClientService
         return $cnpj[12] == $digit1 && $cnpj[13] == $digit2;
     }
 
-    /**
-     * Retorna tipo de documento
-     */
     public function getDocumentType(string $document): string
     {
         return strlen($document) === 11 ? 'CPF' : 'CNPJ';
     }
 
-    /**
-     * Prepara dados do cliente com base no tipo de documento
-     */
     public function prepareClientData(array $data, string $documentType): array
     {
         $cleanDocument = preg_replace('/[^0-9]/', '', $data['document_number']);
@@ -192,25 +152,35 @@ class ClientService
             'document_number' => $cleanDocument,
             'state_registration' => $documentType === 'CPF' ? null : ($data['state_registration'] ?? null),
             'municipal_registration' => $documentType === 'CPF' ? null : ($data['municipal_registration'] ?? null),
-            'contributor_type' => $documentType === 'CPF' 
-                ? ($data['contributor_type'] ?? 9) // Não Contribuinte para PF
-                : ($data['contributor_type'] ?? 1), // Contribuinte para PJ
+            'contributor_type' => $documentType === 'CPF'
+                ? ($data['contributor_type'] ?? 9)
+                : ($data['contributor_type'] ?? 1),
         ]);
     }
 
     /**
-     * Busca cliente por documento ou email
+     * Busca cliente por documento ou email (busca por email_hash)
      */
     public function searchClient(string $search): ?Client
     {
-        // Se for email, busca por usuário
         if (filter_var($search, FILTER_VALIDATE_EMAIL)) {
-            $user = User::where('email', $search)->first();
+            $emailHash = hash('sha256', $search);
+            $user = User::where('email_hash', $emailHash)->first();
+            if (!$user) {
+                // Try by email_hash
+                $user = User::where('email_hash', hash('sha256', $search))->first();
+            }
             return $user ? $this->repository->findByUserId($user->id) : null;
         }
 
-        // Se for documento, limpa e busca
         $cleanDocument = preg_replace('/[^0-9]/', '', $search);
         return $this->repository->findByDocument($cleanDocument);
+    }
+
+    public function hasRecentPurchases(int $clientId, int $years = 5): bool
+    {
+        return \App\Models\Sale::where('client_id', $clientId)
+            ->where('created_at', '>=', now()->subYears($years))
+            ->exists();
     }
 }

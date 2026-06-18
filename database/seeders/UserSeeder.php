@@ -20,7 +20,7 @@ class UserSeeder extends Seeder
         $email = 'admin@teste.com';
 
         User::updateOrCreate(
-            ['username' => 'admin'],
+            ['email_hash' => hash('sha256', $email)],
             [
                 'password' => Hash::make('Mudar@123'),
                 'first_name_hash' => hash('sha256', $firstName),

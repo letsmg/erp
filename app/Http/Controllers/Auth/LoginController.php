@@ -24,7 +24,6 @@ class LoginController extends Controller
         $this->jwtService = $jwtService;
     }
 
-    // Unificamos showLogin e showLoginForm aqui
     public function showLogin()
     {
         if (auth()->check()) {
@@ -60,7 +59,6 @@ class LoginController extends Controller
         ]);
     }
 
-    // API Login - Retorna JSON com token JWT
     public function apiLogin(Request $request): JsonResponse
     {
         $credentials = $request->validate([
@@ -70,7 +68,7 @@ class LoginController extends Controller
 
         if (auth()->attempt($credentials)) {
             $user = auth()->user();
-            
+
             if (!$user->is_active) {
                 return response()->json([
                     'success' => false,
@@ -102,35 +100,45 @@ class LoginController extends Controller
         return redirect('/');
     }
 
-    // API Logout - Retorna JSON
     public function apiLogout(Request $request): JsonResponse
     {
         auth()->logout();
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Logout realizado com sucesso.',
         ], 200);
     }
 
+    /**
+     * Mostra formulário de esqueci senha (recupera por username)
+     */
     public function showForgotPassword()
     {
         return Inertia::render('Auth/ForgotPassword');
     }
 
+    /**
+     * Envia link de reset para o email informado
+     */
     public function sendResetLinkEmail(ForgotPasswordRequest $request): RedirectResponse
     {
         $data = $request->validated();
 
         try {
-            $this->service->sendResetLink($data['email']);
-            return back()->with('success', 'Link enviado com sucesso!');
+            $result = $this->service->sendResetLink($data['email']);
+
+            if (!$result) {
+                return back()->withErrors([
+                    'email' => 'E-mail não encontrado em nossa base.',
+                ]);
+            }
+
+            return back()->with('success', 'Link de recuperação enviado para o e-mail cadastrado!');
         } catch (\Exception $e) {
             return back()->withErrors([
                 'email' => 'Erro no provedor de e-mail: ' . $e->getMessage()
             ]);
         }
     }
-    
-    // Remova o método showLoginForm() duplicado se ele existir no final do arquivo
 }

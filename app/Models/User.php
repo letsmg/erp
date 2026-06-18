@@ -14,7 +14,6 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'username',
         'password',
         'first_name_hash',
         'first_name_encrypted',
@@ -47,8 +46,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'access_level' => AccessLevel::class,
     ];
 
-    // ─── Accessors (Descriptografar dados para exibição) ───
-
     public function getDecryptedFirstNameAttribute(): ?string
     {
         if ($this->first_name_encrypted) {
@@ -77,14 +74,6 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->decrypted_email ?? '';
     }
-
-    // ─── Route key name ───
-    public function getRouteKeyName(): string
-    {
-        return 'username';
-    }
-
-    // ─── Helpers ───
 
     public function isAdmin(): bool
     {

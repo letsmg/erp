@@ -52,7 +52,7 @@ class SelfClientRequest extends BaseFormRequest
             'phone2' => 'nullable|string|max:20',
             'contact1' => 'nullable|string|max:255',
             'contact2' => 'nullable|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email',
+            'email' => 'required|email|max:255',
             'password' => [
                 'required',
                 'confirmed',
@@ -71,7 +71,6 @@ class SelfClientRequest extends BaseFormRequest
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore(auth()->id()),
             ];
             // Não permite alterar documento na edição
             unset($rules['document_number']);
