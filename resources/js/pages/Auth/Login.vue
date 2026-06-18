@@ -117,3 +117,4 @@ const submit = () => {
             </div>
         </div>
     </GuestLayout>
+</template>
