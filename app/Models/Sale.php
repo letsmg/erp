@@ -15,29 +15,11 @@ class Sale extends Model
         'total_amount',
         'sale_date',
         'status',
-        // NF-e fields
-        'cUF', 'natOp', 'mod', 'serie', 'nNF', 'dhEmi',
-        'tpNF', 'idDest', 'chNFe',
-        'vBC', 'vICMS', 'vIPI', 'vPIS', 'vCOFINS',
-        'vFrete', 'vSeg', 'vDesc', 'vNF',
-        'modFrete', 'tPag', 'vPag', 'infCpl',
-        'nProt', 'digVal',
     ];
 
     protected $casts = [
         'total_amount' => 'decimal:2',
-        'vBC' => 'decimal:2',
-        'vICMS' => 'decimal:2',
-        'vIPI' => 'decimal:2',
-        'vPIS' => 'decimal:2',
-        'vCOFINS' => 'decimal:2',
-        'vFrete' => 'decimal:2',
-        'vSeg' => 'decimal:2',
-        'vDesc' => 'decimal:2',
-        'vNF' => 'decimal:2',
-        'vPag' => 'decimal:2',
         'sale_date' => 'datetime',
-        'dhEmi' => 'datetime',
     ];
 
     public function client(): BelongsTo

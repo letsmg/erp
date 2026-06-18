@@ -14,7 +14,7 @@ use App\Http\Controllers\RedisMonitorController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\StripeWebhookController;
-use App\Http\Controllers\VendasController;
+use App\Http\Controllers\SaleController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -168,11 +168,11 @@ Route::middleware(['auth', 'staff'])->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::prefix('vendas')->name('vendas.')->group(function () {
-        Route::get('/', [VendasController::class, 'index'])->name('index');
-        Route::get('/{id}', [VendasController::class, 'show'])->name('show');
-        Route::patch('/{id}/status', [VendasController::class, 'updateStatus'])->name('update.status');
-        Route::post('/{id}/cancelar', [VendasController::class, 'cancel'])->name('cancel');
+    Route::prefix('sales')->name('sales.')->group(function () {
+        Route::get('/', [SaleController::class, 'index'])->name('index');
+        Route::get('/{id}', [SaleController::class, 'show'])->name('show');
+        Route::patch('/{id}/status', [SaleController::class, 'updateStatus'])->name('update.status');
+        Route::post('/{id}/cancel', [SaleController::class, 'cancel'])->name('cancel');
     });
 
     /*

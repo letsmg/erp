@@ -39,6 +39,8 @@ class ClientSeeder extends Seeder
                     'document_number' => fake()->numerify(
                         fake()->randomElement(['###########', '##############'])
                     ),
+                    'contact1'=> fake()->sentence(),
+                    'phone1' => fake()->phoneNumber(), // ou fake()->numerify('119########')
                     'state_registration' => fake()->optional(0.7)->numerify('#########'),
                     'municipal_registration' => fake()->optional(0.5)->numerify('#########'),
                     'contributor_type' => fake()->randomElement([1, 2, 9]),

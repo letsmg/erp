@@ -12,44 +12,31 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
 
-    /**
-     * Os atributos que podem ser preenchidos em massa.
-     */
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
+        'display_name',
         'email',
         'password',
         'access_level',
         'is_active',
-        'last_login_ip', // Auditoria
+        'last_login_ip',
         'email_verified_at'
     ];
 
-    /**
-     * Os atributos que devem ficar ocultos em arrays (JSON).
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Casts dos atributos
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'is_active' => 'boolean',
-
-        // 🔥 ENUM FUNCIONANDO CORRETAMENTE
         'access_level' => AccessLevel::class,
     ];
 
-    /**
-     * ===============================
-     * HELPERS (🔥 MUITO IMPORTANTE)
-     * ===============================
-     */
+    // ─── Helpers ───
 
     public function isAdmin(): bool
     {

@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class VendasController extends Controller
+class SaleController extends Controller
 {
     public function __construct(
         private readonly OrderService $orderService

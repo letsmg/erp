@@ -13,8 +13,7 @@
 
 ## 👨‍💻 Autor
 
-**Luiz Eduardo**  
-🔗 https://github.com/letsmg
+**Luiz Eduardo** 🔗 https://github.com/letsmg
 
 ---
 
@@ -32,9 +31,9 @@
 ERP Vue Laravel é um ERP moderno projetado para entregar:
 
 * ⚡ Alta performance
-* 🔒 Segurança robusta
-* 🧠 Excelente experiência para desenvolvedores
-* 🧩 Arquitetura monolítica organizada em camadas
+* 🔒 Segurança robusta e conformidade estrita com a LGPD
+* 🧠 Excelente experiência para desenvolvedores (DX)
+* 🧩 Arquitetura monolítica organizada estruturalmente em camadas (Controllers, Services, Requests, Models)
 * 🚀 Desenvolvimento rápido usando Inertia.js
 
 O projeto foca em **simplicidade sem perder escalabilidade**.
@@ -76,7 +75,7 @@ Esses atalhos utilizam **Custom Events** disparados dentro do `AuthenticatedLayo
 ## 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/letsmg/erp-vue.git
+git clone [https://github.com/letsmg/erp-vue.git](https://github.com/letsmg/erp-vue.git)
 cd erp-vue
 ```
 
@@ -129,8 +128,7 @@ Para melhor performance de busca e cache, configure o Redis:
 
 **Windows:**
 ```bash
-# Baixe e instale o Redis para Windows
-# Ou use WSL/Docker
+# Baixe e instale o Redis para Windows ou use WSL/Docker
 ```
 
 **Linux/macOS:**
@@ -190,7 +188,7 @@ Isso criará a estrutura do banco e o **usuário administrador inicial**.
 
 ## Abordagem: Inertia.js vs API REST
 
-Este projeto utiliza uma arquitetura baseada em **Inertia.js**, evitando a necessidade de uma API REST separada.
+Este projeto utiliza uma arquitetura baseada em **Inertia.js**, evitando a necessidade de uma API REST separada para consumo de páginas internas.
 
 ### Motivações da escolha
 
@@ -205,22 +203,20 @@ Este projeto utiliza uma arquitetura baseada em **Inertia.js**, evitando a neces
 
 A arquitetura foi pensada para permitir evolução futura para API REST sem retrabalho significativo:
 
-* Regras de negócio centralizadas em **Services**
+* Regras de negócio centralizadas obrigatoriamente em **Services**
 * Controllers podem ser adaptados para retornar JSON
 * Autenticação pode ser feita via **Laravel Sanctum**
 * Alto reaproveitamento de código
 
 ---
 
-# 🔒 Segurança e Performance
+# 🔒 Segurança, Privacidade (LGPD) e Performance
 
-## Autenticação
+## Autenticação e Privacidade
 
-* Hash utilizando Argon2id
-* Memory cost: 64MB
-* Threads: 2
-
-Configuração focada em maior resistência a ataques de força bruta.
+* Hash utilizando Argon2id (Memory cost: 64MB, Threads: 2) para maior resistência a ataques de força bruta.
+* Estrutura de paridade para dados sensíveis (Nomes, CPF, CNPJ e Endereços) utilizando hashing (SHA-256) para buscas performáticas e criptografia em repouso (`Crypt::encryptString`) para exibição decodificada na interface.
+* Validação rigorosa e armazenamento histórico jurídico de aceites de Termos de Uso e Política de Privacidade via tabela própria (`visitor_legal_consents`).
 
 ---
 
@@ -228,28 +224,20 @@ Configuração focada em maior resistência a ataques de força bruta.
 
 * Utilização de PostgreSQL
 * Uso de paginação com filtros
-* Estrutura preparada para indexação em campos críticos
+* Estrutura preparada para indexação em campos críticos e hashes de busca LGPD
 
 ---
 
-# 🔍 SEO
+# 🔍 SEO Dinâmico
 
-A entidade de produtos possui suporte completo a SEO:
+O ecossistema possui um módulo e tabela dedicada ao gerenciamento global e dinâmico de SEO (`seo_metadatas`), tratando de forma isolada os seguintes dados:
 
-- `slug`
 - `meta_title`
 - `meta_description`
 - `meta_keywords`
-- `canonical_url`
-- `h1`
-- `text1`
-- `h2`
-- `text2`
-- `schema_markup`
-- `google_tag_manager`
-- `ads`
-
-Com geração automática de URLs amigáveis e estrutura preparada para otimização avançada em mecanismos de busca, incluindo controle de conteúdo, metadados e integrações externas.
+- `h1_text`
+- `h2_text`
+- `schema_markup` (JSON-LD estruturado e injetado de forma segura usando a diretiva `@verbatim` nas views Blade do Laravel).
 
 ---
 
@@ -259,7 +247,7 @@ Funcionalidades implementadas:
 
 * Busca em tempo real com debounce
 * Filtros dinâmicos no módulo de fornecedores
-* Interface reativa via Inertia.js
+* Interface reativa via Inertia.js com exceção controlada de Axios exclusivamente para consultas rápidas em background do PDV (como leituras de códigos de barra em tempo real).
 
 ---
 
@@ -274,23 +262,17 @@ Suporte à integração com Google Cloud Vision para análise automática de ima
 
 # 📦 Módulos do Sistema
 
-## Implementados
+## Implementados / Em Desenvolvimento Ativo
 
-* CRUD de Usuários com controle de acesso
+* Módulo de Consentimento de Termos de Uso, Políticas de Privacidade e Idiomas (`visitor_legal_consents`)
+* Módulo Global de SEO Gerenciável (`seo_metadatas`)
+* CRUD de Usuários com controle de acesso e Laravel Fortify
 * CRUD de Fornecedores
-* CRUD de Produtos
-* Paginação com filtros
+* CRUD de Produtos (com histórico rígido de movimentações em `stock_movements`)
+* CRUD de Clientes e Módulo de Vendas (PDV / Checkout E-commerce)
+* Controle Financeiro Automático (`accounts_payable` e `accounts_receivable`)
 * Upload e ordenação de imagens (drag and drop)
-* SEO básico
-* Relatórios de produtos
-* Testes com PHPUnit
-
-## Em desenvolvimento
-
-* CRUD de Clientes
-* CRUD de Vendas
-* Relatório de Curva ABC
-* Geração de Sintegra
+* Cobertura de Testes Automatizados com PHPUnit (Unit e Feature Tests)
 
 ---
 
@@ -301,10 +283,10 @@ Suporte à integração com Google Cloud Vision para análise automática de ima
 ERP Vue Laravel is a modern ERP designed to deliver:
 
 * ⚡ High performance
-* 🔒 Robust security
-* 🧠 Excellent developer experience
-* 🧩 Monolithic architecture organized in layers
-* 🚀 Rapid development using Inertia.js
+* 🔒 Robust security and strict LGPD privacy compliance
+* 🧠 Excellent developer experience (DX)
+* 🧩 Monolithic architecture structurally organized in layers (Controllers, Services, Requests, Models)
+* 🚀 Rapid development and SPA behavior using Inertia.js
 
 The project focuses on **simplicity without sacrificing scalability**.
 
@@ -330,10 +312,10 @@ To perform tests locally, check the configuration in the phpunit.xml file.
 
 ## Keyboard Shortcuts
 
-| Shortcut         | Action                                  |
-| ---------------- | --------------------------------------- |
-| CTRL + SHIFT + P | Populate form with fake data            |
-| CTRL + SHIFT + L | Clear form fields and validation errors |
+| Shortcut | Action                                  |
+| -------- | --------------------------------------- |
+| ALT + 1  | Populate form with fake data            |
+| ALT + 2  | Clear form fields and validation errors |
 
 NOTE
 These shortcuts use **Custom Events** triggered inside `AuthenticatedLayout.vue`, keeping page logic clean.
@@ -345,7 +327,7 @@ These shortcuts use **Custom Events** triggered inside `AuthenticatedLayout.vue`
 ## 1. Clone repository
 
 ```bash
-git clone https://github.com/letsmg/erp-vue.git
+git clone [https://github.com/letsmg/erp-vue.git](https://github.com/letsmg/erp-vue.git)
 cd erp-vue
 ```
 
@@ -398,8 +380,7 @@ For better search performance and caching, configure Redis:
 
 **Windows:**
 ```bash
-# Download and install Redis for Windows
-# Or use WSL/Docker
+# Download and install Redis for Windows or use WSL/Docker
 ```
 
 **Linux/macOS:**
@@ -459,7 +440,7 @@ This will create the database structure and generate the **initial admin user**.
 
 ## Approach: Inertia.js vs REST API
 
-This project uses an architecture based on **Inertia.js**, avoiding the need for a separate REST API.
+This project uses an architecture based on **Inertia.js**, avoiding the need for a separate REST API for internal page routing.
 
 ### Why this approach?
 
@@ -474,22 +455,20 @@ This project uses an architecture based on **Inertia.js**, avoiding the need for
 
 The architecture is designed to support future API exposure with minimal refactoring:
 
-* Business logic centralized in **Services**
+* Business logic strictly centralized in **Services**
 * Controllers can be adapted to return JSON responses
 * Authentication can be handled via Laravel Sanctum
 * High code reuse
 
 ---
 
-# 🔒 Security and Performance
+# 🔒 Security, Privacy (LGPD) and Performance
 
-## Authentication
+## Authentication & Privacy
 
-* Argon2id hashing
-* Memory cost: 64MB
-* Threads: 2
-
-Configuration focused on resistance against brute-force attacks.
+* Argon2id hashing (Memory cost: 64MB, Threads: 2) focused on resistance against brute-force attacks.
+* Parity structure for sensitive data (Names, CPF, CNPJ, and Addresses) using SHA-256 hashes for fast database indexing and encryption at rest (`Crypt::encryptString`) for safe rendering.
+* Strict legal compliance logging user consent history for Terms of Use and Privacy Policies via database records (`visitor_legal_consents`).
 
 ---
 
@@ -497,28 +476,20 @@ Configuration focused on resistance against brute-force attacks.
 
 * Uses PostgreSQL
 * Filter-based pagination
-* Structure prepared for indexing on critical fields
+* Structure prepared for indexing on critical fields and privacy hashes
 
 ---
 
-# 🔍 SEO
+# 🔍 Dynamic SEO
 
-The product entity provides full SEO support:
+The ecosystem includes a module and dedicated database table for global SEO management (`seo_metadatas`), processing the following records dynamically:
 
-- `slug`
 - `meta_title`
 - `meta_description`
 - `meta_keywords`
-- `canonical_url`
-- `h1`
-- `text1`
-- `h2`
-- `text2`
-- `schema_markup`
-- `google_tag_manager`
-- `ads`
-
-Includes automatic generation of SEO-friendly URLs and a structure designed for advanced search engine optimization, covering content management, metadata, and external integrations.
+- `h1_text`
+- `h2_text`
+- `schema_markup` (Structured JSON-LD safely rendered using the Laravel `@verbatim` blade directive).
 
 ---
 
@@ -528,7 +499,7 @@ Implemented features:
 
 * Real-time search with debounce
 * Dynamic filters in supplier module
-* Reactive interface powered by Inertia.js
+* Reactive interface powered by Inertia.js with controlled Axios exceptions for real-time background actions in the POS interface (e.g., instant barcode scanning).
 
 ---
 
@@ -543,23 +514,17 @@ Supports integration with Google Cloud Vision for automatic image analysis durin
 
 # 📦 System Modules
 
-## Implemented
+## Implemented / Under Active Development
 
-* User CRUD with role-based access control
+* Terms of Use, Privacy Policy & Language Preference Consent Module (`visitor_legal_consents`)
+* Manageable Global SEO Module (`seo_metadatas`)
+* User CRUD with role-based access control and Laravel Fortify
 * Supplier CRUD
-* Product CRUD
-* Filtered pagination
+* Product CRUD (backed by absolute history tracking via `stock_movements`)
+* Customer CRUD & Sales System (POS / E-commerce Checkout)
+* Automated Financial Ledger (`accounts_payable` and `accounts_receivable`)
 * Drag-and-drop image ordering
-* Basic SEO
-* Product reports
-* Tests with PHPUnit
-
-## In Progress
-
-* Customer CRUD
-* Sales CRUD
-* ABC Curve report
-* Sintegra generation
+* Automated PHPUnit Suite (Unit and Feature Tests)
 
 ---
 

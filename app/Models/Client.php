@@ -6,87 +6,108 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Crypt;
 
 class Client extends Model
 {
     use HasFactory;
 
-    /**
-     * Atributos que podem ser preenchidos em massa (Mass Assignment).
-     */
     protected $fillable = [
         'user_id',
+        'first_name',
+        'last_name',
+        'display_name',
         'name',
         'document_number',
-        'document_type', // CPF ou CNPJ
+        'document_hash',
+        'document_encrypted',
+        'document_type',
         'phone1',
+        'phone1_hash',
+        'phone1_encrypted',
         'contact1',
         'phone2',
+        'phone2_hash',
+        'phone2_encrypted',
         'contact2',
-        'state_registration', // Inscrição Estadual
-        'municipal_registration', // Inscrição Municipal
-        'contributor_type', // Contribuinte: 1=Contribuinte ICMS, 2=Contribuinte Isento, 9=Não Contribuinte
+        'state_registration',
+        'municipal_registration',
+        'contributor_type',
         'is_active',
     ];
 
-    /**
-     * Relacionamento com o Usuário (Login).
-     * Um cliente pertence a um usuário.
-     */
+    // ─── Relationships ───
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Relacionamento com o Endereço.
-     * Um cliente possui vários endereços.
-     */
     public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);
     }
 
-    /**
-     * Relacionamento com as Vendas.
-     * Um cliente pode ter várias vendas.
-     */
     public function sales(): HasMany
     {
         return $this->hasMany(Sale::class);
     }
 
-    /**
-     * Relacionamento com o Carrinho de Compras.
-     * Um cliente pode ter vários itens no carrinho (através da tabela users).
-     */
     public function shoppingCartItems(): HasMany
     {
         return $this->hasMany(ShoppingCart::class, 'user_id', 'user_id');
     }
 
-    /**
-     * Retorna o endereço de entrega principal
-     */
+    // ─── Accessors ───
+
     public function getDeliveryAddressAttribute()
     {
         return $this->addresses()->where('is_delivery_address', true)->first();
     }
 
     /**
-     * Verifica se o documento é CPF
+     * Get decrypted document number
      */
-    public function isCPF(): bool
+    public function getDecryptedDocumentAttribute(): ?string
     {
-        return $this->document_type === 'CPF' && strlen($this->document_number) === 11;
+        if ($this->document_encrypted) {
+            return Crypt::decryptString($this->document_encrypted);
+        }
+        return $this->document_number;
     }
 
     /**
-     * Verifica se o documento é CNPJ
+     * Get decrypted phone1
      */
+    public function getDecryptedPhone1Attribute(): ?string
+    {
+        if ($this->phone1_encrypted) {
+            return Crypt::decryptString($this->phone1_encrypted);
+        }
+        return $this->phone1;
+    }
+
+    /**
+     * Get decrypted phone2
+     */
+    public function getDecryptedPhone2Attribute(): ?string
+    {
+        if ($this->phone2_encrypted) {
+            return Crypt::decryptString($this->phone2_encrypted);
+        }
+        return $this->phone2;
+    }
+
+    // ─── Helpers ───
+
+    public function isCPF(): bool
+    {
+        return $this->document_type === 'CPF' && strlen($this->document_number ?? '') === 11;
+    }
+
     public function isCNPJ(): bool
     {
-        return $this->document_type === 'CNPJ' && strlen($this->document_number) === 14;
+        return $this->document_type === 'CNPJ' && strlen($this->document_number ?? '') === 14;
     }
 
     public function getNameAttribute($value)
@@ -119,12 +140,9 @@ class Client extends Model
         return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
     }
 
-    /**
-     * Formata o documento com máscara
-     */
     public function getFormattedDocumentAttribute(): string
     {
-        $doc = $this->document_number;
+        $doc = $this->decrypted_document ?? $this->document_number;
         if ($this->isCPF()) {
             $doc = preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $doc);
         } elseif ($this->isCNPJ()) {
@@ -133,9 +151,6 @@ class Client extends Model
         return htmlspecialchars($doc, ENT_QUOTES, 'UTF-8');
     }
 
-    /**
-     * Retorna o tipo de contribuinte formatado
-     */
     public function getContributorTypeDescriptionAttribute(): string
     {
         return match($this->contributor_type) {
@@ -146,25 +161,16 @@ class Client extends Model
         };
     }
 
-    /**
-     * Verifica se o cliente é contribuinte de ICMS
-     */
     public function isICMSContributor(): bool
     {
         return $this->contributor_type === 1;
     }
 
-    /**
-     * Verifica se o cliente é isento de ICMS
-     */
     public function isICMSExempt(): bool
     {
         return $this->contributor_type === 2;
     }
 
-    /**
-     * Verifica se o cliente não é contribuinte
-     */
     public function isNonContributor(): bool
     {
         return $this->contributor_type === 9;
