@@ -14,7 +14,7 @@ jobs:
       - name: 🐘 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3' # Versão estável do PHP para o Laravel
+          php-version: '8.5' # Versão estável do PHP para o Laravel
           extensions: mbstring, bcmath, gd, zip, pgsql, pdo_sqlite
           coverage: none
 
@@ -102,7 +102,7 @@ jobs:
             sudo ln -sfn ${NEW_RELEASE} ${LIVE_LINK}
             
             # 8. REINICIALIZAÇÃO E LIMPEZA
-            sudo systemctl restart php8.3-fpm # Limpa cache do OPcache do PHP
+            sudo systemctl restart php8.5-fpm # Limpa cache do OPcache do PHP
             sudo rm /tmp/${PROJECT}-deploy.zip
             
             # Opcional: Manter apenas as últimas 5 versões para economizar espaço
