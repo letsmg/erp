@@ -1,25 +1,25 @@
-name: 🚀 Build & Deploy ERP Vue (Atômico)
+name: 🚀 Build & Deploy ERP Vue (Atômico) - Dev
 
 on:
   push:
-    branches: [main] # Dispara o deploy automaticamente ao enviar código para a branch main
+    branches: [dev] # Alterado para disparar na branch de testes dev
 
 jobs:
   build-and-pack:
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4 # Baixa o código do seu repositório para o ambiente do GitHub Actions
+        uses: actions/checkout@v4
 
       - name: 🐘 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5' # Versão estável do PHP para o Laravel
+          php-version: '8.5'
           extensions: mbstring, bcmath, gd, zip, pgsql, pdo_sqlite
           coverage: none
 
       - name: 📦 Install Composer
-        run: composer install --no-dev --optimize-autoloader --no-interaction # Dependências de produção apenas
+        run: composer install --no-dev --optimize-autoloader --no-interaction
 
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
@@ -30,7 +30,7 @@ jobs:
       - name: 🔨 Build Assets (Vite/TS)
         run: |
           npm install
-          npm run build # Gera public/build. Essencial para evitar o erro "u is null" no Vue
+          npm run build
 
       - name: 🤐 Criar Pacote de Deploy
         run: zip -r deploy.zip . -x ".git/*" "node_modules/*" ".github/*" "tests/*" ".env*" "storage/*"
@@ -39,16 +39,17 @@ jobs:
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }} # Evita ataques Man-in-the-Middle
+          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
 
       - name: 🚀 Deploy Atômico
         run: |
-          PROJECT_NAME="Erp"
-          # Sincroniza o pacote zipado para a pasta temporária do servidor
-          scp deploy.zip ubuntu@${{ secrets.SERVER_IP }}:/tmp/${PROJECT_NAME}-deploy.zip
+          PROJECT_NAME="dev-erp" # Padronizado com o nome da pasta do servidor
+          
+          # Envia o pacote zipado diretamente para a Home do usuário ubuntu no servidor
+          scp deploy.zip ubuntu@${{ secrets.SERVER_IP }}:~/${PROJECT_NAME}-deploy.zip
 
-          ssh ubuntu@${{ secrets.SERVER_IP }} << 'EOF'
-            set -e # Aborta o script se houver qualquer erro em qualquer linha abaixo
+          ssh ubuntu@${{ secrets.SERVER_IP }} -v << 'EOF'
+            set -e 
 
             # CONFIGURAÇÃO DE CAMINHOS
             PROJECT="dev-erp"
@@ -59,17 +60,16 @@ jobs:
             NEW_RELEASE="${RELEASES_PATH}/$(date +%Y%m%d%H%M%S)"
             
             # 1. GARANTIR ESTRUTURA PERSISTENTE
-            # Criamos pastas em 'shared' para arquivos que NÃO mudam entre deploys
             sudo mkdir -p ${SHARED_PATH}/storage/app/public
             sudo mkdir -p ${SHARED_PATH}/storage/framework/{cache,sessions,views}
             sudo mkdir -p ${SHARED_PATH}/storage/logs
             
             # 2. PREPARAR NOVA VERSÃO
             sudo mkdir -p ${NEW_RELEASE}
-            sudo unzip -o /tmp/${PROJECT}-deploy.zip -d ${NEW_RELEASE}
+            # CORRIGIDO: Agora busca o arquivo correto enviado na Home (~) do usuário ubuntu
+            sudo unzip -o ~/${PROJECT}-deploy.zip -d ${NEW_RELEASE}
             
             # 3. CONECTAR ARQUIVOS VIA LINKS SIMBÓLICOS (SYMLINKS)
-            # O Laravel na pasta nova vai "enxergar" o .env e o storage da pasta shared
             sudo ln -sfn ${SHARED_PATH}/.env ${NEW_RELEASE}/.env
             sudo rm -rf ${NEW_RELEASE}/storage
             sudo ln -sfn ${SHARED_PATH}/storage ${NEW_RELEASE}/storage
@@ -81,31 +81,28 @@ jobs:
                 echo "ℹ Sentry DSN não configurado, monitoramento de erros desativado"
             fi
             
-            # 4. AJUSTAR PERMISSÕES DE DONO (CORREÇÃO ERRO 500)
-            # www-data é o usuário do Nginx/PHP-FPM. Ele precisa ser o dono para ler/escrever.
+            # 4. AJUSTAR PERMISSÕES DE DONO
             sudo chown -R www-data:www-data ${NEW_RELEASE}
             sudo chown -R www-data:www-data ${SHARED_PATH}/storage
             
-            # 5. LINK DE ACESSO PÚBLICO AO STORAGE (CORREÇÃO ERRO 404 ICON)
-            # Permite que o navegador acesse arquivos de upload/ícones via URL
+            # 5. LINK DE ACESSO PÚBLICO AO STORAGE
             sudo rm -rf ${NEW_RELEASE}/public/storage
             sudo ln -sfn ${SHARED_PATH}/storage/app/public ${NEW_RELEASE}/public/storage
             
             # 6. COMANDOS INTERNOS DO LARAVEL
             cd ${NEW_RELEASE}
-            sudo -u www-data php artisan migrate --force # Roda migrations sem pedir confirmação
-            sudo -u www-data php artisan optimize # Limpa caches e gera arquivos de rota/config otimizados
-            sudo -u www-data php artisan app:sync-product-images # Verifica e baixa imagens de produtos ausentes
+            sudo -u www-data php artisan migrate --force
+            sudo -u www-data php artisan optimize
+            sudo -u www-data php artisan app:sync-product-images 
             
             # 7. O PULO DO GATO: SWAP ATÔMICO
-            # Altera o atalho 'current' para a nova pasta. O site atualiza em milissegundos.
             sudo ln -sfn ${NEW_RELEASE} ${LIVE_LINK}
             
             # 8. REINICIALIZAÇÃO E LIMPEZA
-            sudo systemctl restart php8.5-fpm # Limpa cache do OPcache do PHP
-            sudo rm /tmp/${PROJECT}-deploy.zip
+            sudo systemctl restart php8.5-fpm
+            rm ~/${PROJECT}-deploy.zip # CORRIGIDO: Remove o arquivo da Home do usuário ubuntu
             
-            # Opcional: Manter apenas as últimas 5 versões para economizar espaço
+            # Manter apenas as últimas 5 versões para economizar espaço
             cd ${RELEASES_PATH} && sudo ls -1tr | head -n -5 | xargs -d '\n' rm -rf --
             
             echo "✅ Deploy atômico finalizado com sucesso!"
