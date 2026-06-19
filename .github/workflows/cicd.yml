@@ -43,7 +43,7 @@ jobs:
 
       - name: 🚀 Deploy Atômico
         run: |
-          PROJECT_NAME="erp-vue"
+          PROJECT_NAME="Erp"
           # Sincroniza o pacote zipado para a pasta temporária do servidor
           scp deploy.zip ubuntu@${{ secrets.SERVER_IP }}:/tmp/${PROJECT_NAME}-deploy.zip
 
@@ -51,7 +51,7 @@ jobs:
             set -e # Aborta o script se houver qualquer erro em qualquer linha abaixo
 
             # CONFIGURAÇÃO DE CAMINHOS
-            PROJECT="erp-vue"
+            PROJECT="dev-erp"
             BASE_PATH="/var/www/$PROJECT"
             SHARED_PATH="${BASE_PATH}/shared"
             LIVE_LINK="${BASE_PATH}/current"
