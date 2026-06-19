@@ -1,0 +1,115 @@
+name: 🚀 Build & Deploy ERP Vue (Atômico Dinâmico)
+
+on:
+  push:
+    branches: [main, dev] # <--- AGORA ELE DISPARA NAS DUAS BRANCHES!
+
+jobs:
+  build-and-pack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, bcmath, gd, zip, pgsql, pdo_sqlite
+          coverage: none
+
+      - name: 📦 Install Composer
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 🔨 Build Assets (Vite/TS)
+        run: |
+          npm install
+          npm run build
+
+      - name: 🤐 Criar Pacote de Deploy
+        run: zip -r deploy.zip . -x ".git/*" "node_modules/*" ".github/*" "tests/*" ".env*" "storage/*"
+
+      - name: 🔑 Configure SSH
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+
+      - name: 🚀 Deploy Atômico Dinâmico
+        run: |
+          # O PULO DO GATO: Define o nome do projeto baseado na branch do push
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            PROJECT_NAME="erp"
+          else
+            PROJECT_NAME="dev-erp"
+          fi
+          
+          echo "Iniciando deploy para o ambiente: $PROJECT_NAME"
+
+          # Sincroniza o pacote zipado para a pasta temporária correta do servidor
+          scp deploy.zip ubuntu@${{ secrets.SERVER_IP }}:/tmp/${PROJECT_NAME}-deploy.zip
+
+          ssh ubuntu@${{ secrets.SERVER_IP }} -t "PROJECT_NAME=$PROJECT_NAME" << 'EOF'
+            set -e # Aborta se houver erros
+
+            # CONFIGURAÇÃO DE CAMINHOS DINÂMICOS
+            PROJECT="$PROJECT_NAME"
+            BASE_PATH="/var/www/$PROJECT"
+            SHARED_PATH="${BASE_PATH}/shared"
+            LIVE_LINK="${BASE_PATH}/current"
+            RELEASES_PATH="${BASE_PATH}/releases"
+            NEW_RELEASE="${RELEASES_PATH}/$(date +%Y%m%d%H%M%S)"
+            
+            # 1. GARANTIR ESTRUTURA PERSISTENTE
+            sudo mkdir -p ${SHARED_PATH}/storage/app/public
+            sudo mkdir -p ${SHARED_PATH}/storage/framework/{cache,sessions,views}
+            sudo mkdir -p ${SHARED_PATH}/storage/logs
+            
+            # 2. PREPARAR NOVA VERSÃO
+            sudo mkdir -p ${NEW_RELEASE}
+            sudo unzip -o /tmp/${PROJECT}-deploy.zip -d ${NEW_RELEASE}
+            
+            # 3. CONECTAR ARQUIVOS VIA LINKS SIMBÓLICOS (SYMLINKS)
+            sudo ln -sfn ${SHARED_PATH}/.env ${NEW_RELEASE}/.env
+            sudo rm -rf ${NEW_RELEASE}/storage
+            sudo ln -sfn ${SHARED_PATH}/storage ${NEW_RELEASE}/storage
+
+            # 3.5. CONFIGURAR SENTRY SE HOUVER DSN NO .ENV
+            if grep -q "SENTRY_LARAVEL_DSN=" ${SHARED_PATH}/.env; then
+                echo "✓ Sentry DSN encontrado, monitoramento de erros ativo"
+            else
+                echo "ℹ Sentry DSN não configurado, monitoramento de erros desativado"
+            fi
+            
+            # 4. AJUSTAR PERMISSÕES DE DONO
+            sudo chown -R www-data:www-data ${NEW_RELEASE}
+            sudo chown -R www-data:www-data ${SHARED_PATH}/storage
+            
+            # 5. LINK DE ACESSO PÚBLICO AO STORAGE
+            sudo rm -rf ${NEW_RELEASE}/public/storage
+            sudo ln -sfn ${SHARED_PATH}/storage/app/public ${NEW_RELEASE}/public/storage
+            
+            # 6. COMANDOS INTERNOS DO LARAVEL
+            cd ${NEW_RELEASE}
+            sudo -u www-data php artisan migrate --force
+            sudo -u www-data php artisan optimize
+            sudo -u www-data php artisan app:sync-product-images
+            
+            # 7. SWAP ATÔMICO
+            sudo ln -sfn ${NEW_RELEASE} ${LIVE_LINK}
+            
+            # 8. REINICIALIZAÇÃO E LIMPEZA
+            sudo systemctl restart php8.5-fpm
+            sudo rm /tmp/${PROJECT}-deploy.zip
+            
+            # Manter apenas as últimas 5 versões
+            cd ${RELEASES_PATH} && sudo ls -1tr | head -n -5 | xargs -d '\n' rm -rf --
+            
+            echo "✅ Deploy atômico para $PROJECT finalizado com sucesso!"
+          EOF
